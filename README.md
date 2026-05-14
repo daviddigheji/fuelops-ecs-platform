@@ -1,174 +1,137 @@
 # FuelOps ECS Platform
 
-Infrastructure-as-code project for deploying a production-style AWS ECS Fargate platform for a sample FuelOps application using Terraform. The platform is designed to demonstrate practical cloud engineering skills across networking, load balancing, container orchestration, IAM, and logging.
+Production-style AWS ECS Fargate platform for a sample application, built with Terraform to demonstrate practical cloud engineering skills across networking, load balancing, container orchestration, IAM, logging, and infrastructure as code.
 
-## Project overview
+## Overview
 
-This project provisions a small but realistic AWS container platform in `eu-west-2` using Terraform. It deploys a dedicated VPC across two Availability Zones, public and private subnets, an internet-facing Application Load Balancer (ALB), an ECS cluster running Fargate tasks, and CloudWatch logging.
+This project uses Terraform to deploy a container platform on AWS. The application runs on ECS Fargate behind an Application Load Balancer, with networking, security groups, IAM permissions, and CloudWatch logging configured as part of the infrastructure.
 
-The goal is to model a minimum viable production-style architecture rather than a simple single-resource demo. That means the application is reachable through the ALB in public subnets, while the ECS tasks run privately and securely in private subnets.
+## Architecture
 
-## Target architecture (MVP)
+The platform includes the following core components:
 
-The current target architecture includes:
+- Amazon VPC for network isolation, with public and private subnets across Availability Zones.
+- Internet Gateway and NAT Gateway for controlled inbound and outbound connectivity.
+- Application Load Balancer in the public subnets to receive inbound HTTP traffic.
+- ECS cluster and ECS Fargate service running the application in private subnets.
+- Security groups separating ALB access from ECS task access.
+- IAM task execution role for pulling images and sending logs.
+- CloudWatch Logs for application log collection and operational verification.
 
-- A dedicated VPC for the FuelOps environment
-- Two public subnets for internet-facing components
-- Two private subnets for ECS tasks
-- An Internet Gateway for public connectivity
-- A NAT Gateway for outbound internet access from private subnets
-- Public and private route tables
-- Security groups for the ALB and ECS service
-- An Application Load Balancer with HTTP listener
-- An IP-based target group for ECS/Fargate
-- An ECS cluster running a Fargate service
-- A task execution IAM role for pulling images and writing logs
-- A CloudWatch Log Group for container logs
+## Target architecture
 
-## Architecture flow
+The target architecture for this MVP is a secure and modular ECS Fargate deployment pattern suitable for portfolio demonstration and interview discussion. The ALB is internet-facing in the public subnets, while the application tasks run in private subnets to reduce direct exposure and follow common AWS design practice. Traffic flows from the ALB to the ECS service through a target group using IP targets, which is the standard pattern for Fargate networking.
 
-1. A user sends an HTTP request to the Application Load Balancer.
-2. The ALB listener forwards the request to the target group.
-3. The target group routes traffic to the ECS service running in private subnets.
-4. The ECS service runs a Fargate task based on the task definition.
-5. Container logs are sent to CloudWatch Logs.
-6. Private workloads use the NAT Gateway for outbound internet access when required.
-
-## Repository structure
+## Project structure
 
 ```text
 fuelops-ecs-platform/
-├── app/
-├── docs/
-├── screenshots/
-├── terraform/
-│   └── environments/
-│       └── prod/
-│           ├── backend.tf
-│           ├── provider.tf
-│           ├── variables.tf
-│           ├── networking.tf
-│           ├── alb.tf
-│           ├── ecs.tf
-│           ├── outputs.tf
-│           └── main.tf
+├── README.md
 ├── .gitignore
-└── README.md
+├── docs/
+│   ├── 00-repo-structure.png
+│   ├── 01-ecs-service-running.png
+│   ├── 02-cloudwatch-logs-fuelops-prod.png
+│   └── 03-fuelops-ecs-prod-app-logs-2026-05-13.txt
+└── terraform/
+    └── environments/
+        └── prod/
+            ├── backend.tf
+            ├── provider.tf
+            ├── variables.tf
+            ├── networking.tf
+            ├── alb.tf
+            ├── ecs.tf
+            ├── outputs.tf
+            └── main.tf
 ```
 
-## Terraform file purpose
+This layout keeps the infrastructure easy to read and explain. Splitting resources into `networking.tf`, `alb.tf`, and `ecs.tf` makes the design more maintainable and helps reviewers quickly understand the responsibility of each file.
 
-### backend.tf
-Configures the Terraform remote backend in Amazon S3 so state is stored centrally and can be managed more safely than local state.
+## Terraform files
 
-### provider.tf
-Configures the AWS provider and deployment region.
+### `backend.tf`
 
-### variables.tf
-Defines reusable input variables such as project name, environment, region, VPC CIDR, subnet CIDRs, and availability zones.
+Defines the Terraform backend configuration for remote state management.
 
-### networking.tf
-Contains the core network infrastructure:
-- VPC
-- Internet Gateway
-- Public and private subnets
-- NAT Gateway and Elastic IP
-- Route tables and associations
-- ALB and ECS service security groups
+### `provider.tf`
 
-### alb.tf
-Contains the Application Load Balancer resources:
-- ALB
-- Target group
-- Listener
+Configures the AWS provider and region used by the deployment.
 
-### ecs.tf
-Contains the container runtime resources:
-- ECS cluster
-- ECS task execution IAM role
-- CloudWatch log group
-- ECS task definition
-- ECS service
+### `variables.tf`
 
-### outputs.tf
-Exposes useful values such as VPC ID, subnet IDs, gateway IDs, and the ALB DNS name.
+Declares reusable input variables such as project name, environment, VPC CIDR, and other configurable values.
 
-### main.tf
-Kept as the root entry-point file by convention. The main resource definitions were refactored into separate files by concern for readability and maintainability.
+### `networking.tf`
 
-## Current deployment configuration
+Contains the network layer: VPC, subnets, internet gateway, NAT gateway, route tables, and security groups.
 
-- **Region:** eu-west-2
-- **Environment:** prod
-- **Container image:** `nginx:alpine`
-- **Launch type:** AWS Fargate
-- **CPU / Memory:** 256 / 512
-- **Load balancer:** Application Load Balancer
-- **Target type:** IP
-- **Log retention:** 7 days
+### `alb.tf`
 
-## Key design decisions
+Defines the traffic entry layer: Application Load Balancer, target group, and HTTP listener.
 
-### Why Fargate?
-Fargate removes the need to manage EC2 worker nodes and lets the platform focus on the application task definition, networking, IAM, and service behaviour.
+### `ecs.tf`
 
-### Why private subnets for ECS tasks?
-Running ECS tasks in private subnets improves security by preventing direct public access. The ALB handles inbound traffic, and the NAT Gateway supports outbound internet access when needed.
+Defines the runtime layer: ECS cluster, task execution IAM role, CloudWatch log group, task definition, and ECS service.
 
-### Why split the Terraform files?
-The project was initially built in a single `main.tf`, then refactored into `networking.tf`, `alb.tf`, and `ecs.tf` so the code is easier to read, maintain, review, and explain.
+### `outputs.tf`
 
-## How to use
+Exposes important values such as identifiers and endpoints that are useful after deployment.
 
-From the production environment directory:
+### `main.tf`
+
+Acts as the root Terraform entry point and may remain minimal when resources are separated into focused files.
+
+## Deployment workflow
+
+From the Terraform environment directory, the deployment flow is:
 
 ```bash
-cd terraform/environments/prod
-terraform init
 terraform fmt
 terraform validate
 terraform plan
 terraform apply
 ```
 
-To destroy the infrastructure:
+After deployment, the next checks are to confirm that the ECS service is healthy, the ALB is forwarding traffic, and the CloudWatch log group is receiving application logs.
+
+To avoid unnecessary AWS charges, the environment can be removed after testing with:
 
 ```bash
 terraform destroy
 ```
 
-## Sample outputs
+## Observability and evidence
 
-After deployment, Terraform outputs values including:
+This project includes basic observability through Amazon CloudWatch Logs for the ECS Fargate workload.
 
-- `vpc_id`
-- `public_subnet_ids`
-- `private_subnet_ids`
-- `nat_gateway_id`
-- `internet_gateway_id`
-- `alb_dns_name`
+After deployment, the service was verified in the ECS console with `fuelops-prod-service` showing 1 desired task and 1 running task, confirming that the application was successfully deployed.
 
-The `alb_dns_name` output can be used to test the running application in a browser.
+Application log output was then reviewed in CloudWatch Logs under the `/ecs/fuelops-prod` log group. The log stream showed timestamped HTTP `GET /` requests from the running container, confirming that the service was receiving traffic and writing logs as expected.
 
-## Learning outcomes
+### Evidence files
 
-This project demonstrates:
+- `docs/00-repo-structure.png` — VS Code screenshot showing the repository structure.
+- `docs/01-ecs-service-running.png` — ECS service view showing the running Fargate task and successful deployment status.
+- `docs/02-cloudwatch-logs-fuelops-prod.png` — CloudWatch log events from the `ecs/fuelops-prod-app/...` stream.
+- `docs/03-fuelops-ecs-prod-app-logs-2026-05-13.txt` — Downloaded sample log output from CloudWatch Logs.
 
-- Terraform configuration structure and refactoring
-- AWS VPC design with public/private subnet separation
-- ECS Fargate service deployment
-- Application Load Balancer integration with ECS
-- IAM execution role usage for ECS tasks
-- CloudWatch logging integration
-- Practical infrastructure-as-code documentation and GitHub presentation
+## Key learning points
+
+This project demonstrates practical understanding of:
+
+- Infrastructure as code with Terraform.
+- AWS networking design for public and private workloads.
+- ECS Fargate service deployment behind an ALB.
+- IAM permissions for ECS task execution and log delivery.
+- Operational verification using CloudWatch Logs.
+- Structuring Terraform code in a modular, readable format for real-world collaboration and maintenance.
 
 ## Future improvements
 
-Planned next steps include:
+Possible next improvements for this platform include:
 
-- HTTPS listener with ACM certificate
-- Route 53 DNS integration
-- ECS service auto scaling
-- CI/CD pipeline for Terraform and container deployments
-- ECR image workflow instead of a public container image
-- Reusable Terraform modules for multi-environment deployments
+- HTTPS listener with ACM certificate on the ALB.
+- ECS service auto scaling based on CPU or memory.
+- A small sample frontend or API application to make the platform more visibly end-to-end.
+- Further module reuse and multi-environment expansion.
