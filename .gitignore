@@ -1,3 +1,16 @@
+# Terraform variable files
+*.tfvars
+*.tfvars.json
+
+# Sensitive environment files
+.env
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
 # Terraform
 .terraform/
 **/.terraform/*
