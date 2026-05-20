@@ -6,21 +6,83 @@ Production-style AWS ECS Fargate platform for a sample application, built with T
 
 This project uses Terraform to deploy a container platform on AWS. The application runs on ECS Fargate behind an Application Load Balancer, with networking, security groups, IAM permissions, and CloudWatch logging configured as part of the infrastructure.
 
-## Architecture
+## Architecture Diagram
 
-The platform includes the following core components:
+The FuelOps ECS Platform uses a production-style AWS architecture designed around security, scalability, and operational visibility.
 
-- Amazon VPC for network isolation, with public and private subnets across Availability Zones.
-- Internet Gateway and NAT Gateway for controlled inbound and outbound connectivity.
-- Application Load Balancer in the public subnets to receive inbound HTTP traffic.
-- ECS cluster and ECS Fargate service running the application in private subnets.
-- Security groups separating ALB access from ECS task access.
-- IAM task execution role for pulling images and sending logs.
-- CloudWatch Logs for application log collection and operational verification.
+Key architectural principles include:
+- Public/private subnet separation
+- Internet-facing Application Load Balancer (ALB)
+- ECS Fargate workloads deployed in private subnets
+- NAT Gateway for secure outbound internet access
+- Centralized logging using Amazon CloudWatch
+- Multi-subnet deployment for high availability
 
-## Target architecture
+![FuelOps Architecture](docs/architecture/fuelops-production-architecture.png)
 
-The target architecture for this MVP is a secure and modular ECS Fargate deployment pattern suitable for portfolio demonstration and interview discussion. The ALB is internet-facing in the public subnets, while the application tasks run in private subnets to reduce direct exposure and follow common AWS design practice. Traffic flows from the ALB to the ECS service through a target group using IP targets, which is the standard pattern for Fargate networking.
+## Architecture Components
+
+| Component | Purpose |
+|---|---|
+| VPC | Provides isolated AWS networking environment |
+| Public Subnets | Hosts internet-facing resources like the ALB |
+| Private Subnets | Hosts secure ECS workloads |
+| Application Load Balancer | Distributes incoming traffic across ECS services |
+| ECS Fargate | Runs containerized application workloads |
+| NAT Gateway | Enables secure outbound internet access for private workloads |
+| CloudWatch Logs | Centralized logging and monitoring |
+| Internet Gateway | Enables internet connectivity for public resources |
+
+## Security Design
+
+The platform follows AWS security best practices by separating public and private networking layers.
+
+Security considerations include:
+- ECS workloads deployed in private subnets
+- Public access restricted to the Application Load Balancer
+- Controlled outbound internet access through NAT Gateway
+- Security groups limiting inbound and outbound traffic
+- IAM roles used for ECS task execution
+- Centralized logging for operational visibility and monitoring
+
+## Business Use Case
+
+FuelOps simulates a production-style container platform for a fuel distribution operations company requiring scalable, resilient, and observable application infrastructure.
+
+The platform demonstrates how modern organizations can deploy containerized workloads securely using AWS managed services while maintaining separation between public-facing and private application layers.
+
+The architecture is designed to support:
+- scalable web application deployment,
+- secure network segmentation,
+- centralized logging and monitoring,
+- infrastructure automation using Terraform,
+- operational consistency across environments.
+
+## Tech Stack
+
+- AWS ECS Fargate
+- Application Load Balancer (ALB)
+- Amazon VPC
+- Public and Private Subnets
+- NAT Gateway
+- Internet Gateway
+- AWS IAM
+- Amazon CloudWatch Logs
+- Terraform
+- Docker
+- GitHub
+- Linux
+
+## Quick Start
+
+```bash
+git clone git@github.com:daviddigheji/fuelops-ecs-platform.git
+
+cd fuelops-ecs-platform/terraform/environments/prod
+
+terraform init
+terraform plan
+terraform apply
 
 ## Project structure
 
@@ -48,7 +110,7 @@ fuelops-ecs-platform/
 
 This layout keeps the infrastructure easy to read and explain. Splitting resources into `networking.tf`, `alb.tf`, and `ecs.tf` makes the design more maintainable and helps reviewers quickly understand the responsibility of each file.
 
-## Terraform files
+## Terraform Configuration Breakdown
 
 ### `backend.tf`
 
@@ -135,3 +197,11 @@ Possible next improvements for this platform include:
 - ECS service auto scaling based on CPU or memory.
 - A small sample frontend or API application to make the platform more visibly end-to-end.
 - Further module reuse and multi-environment expansion.
+
+## Author
+
+David Digheji
+
+- Portfolio: https://daviddigheji.com
+- GitHub: https://github.com/daviddigheji
+- LinkedIn: https://linkedin.com/in/david-digheji
