@@ -130,33 +130,78 @@ terraform destroy
 ## Project structure
 
 ```text
-fuelops-ecs-platform/
-├── .github/
-│   └── workflows/
-├── app/
-├── docs/
-│   ├── architecture/
-│   │   └── fuelops-production-architecture.png
-│   ├── build-notes/
-│   │   ├── phase1-foundation/
-│   │   ├── phase2-networking/
-│   │   ├── phase3-security/
-│   │   ├── phase4-application/
-│   │   ├── phase4-ecs/
-│   │   └── phase5-observability/
-│   ├── diagrams/
-│   │   └── fuelops-aws-ecs-architecture.drawio
-│   └── evidence/
-│       ├── 00-repo-structure.png
-│       ├── 01-ecs-service-running.png
-│       ├── 02-cloudwatch-logs-fuelops-prod.png
-│       └── 03-fuelops-ecs-prod-app-logs-2026-05-13.txt
-├── terraform/
-│   ├── environments/
-│   │   └── prod/
-│   └── modules/
+.github
+│   └── workflows
+│       └── terraform.yml
 ├── .gitignore
-└── README.md
+├── app
+├── docs
+│   ├── architecture
+│   │   └── fuelops-production-architecture.png
+│   ├── build-notes
+│   │   ├── phase1-foundation
+│   │   │   ├── 01-terraform-init-success.png
+│   │   │   ├── 02-s3-backend-bucket-created.png
+│   │   │   ├── 03-dynamodb-lock-table-created.png
+│   │   │   ├── 04-foundation-project-structure.png
+│   │   │   ├── 05-terraform-plan-success.png
+│   │   │   └── 06-terraform-apply-success.png
+│   │   ├── phase2-networking
+│   │   │   ├── 01-vpc-created.png
+│   │   │   ├── 02-public-private-subnets.png
+│   │   │   ├── 03-public-route-table-associations.png
+│   │   │   ├── 04-networking-terraform-plan.png
+│   │   │   ├── 04-public-route-table-routes.png
+│   │   │   ├── 05-private-route-table-routes.png
+│   │   │   └── 06-networking-terraform-apply-success.png
+│   │   ├── phase3-security
+│   │   │   ├── 01-security-group-rules.png
+│   │   │   ├── 03-ecs-trust-relationship.png
+│   │   │   └── fuelops-prod-ecs-task-execution-role.png
+│   │   ├── phase4-application
+│   │   │   ├── 01-ecs-cluster-active.png
+│   │   │   ├── 02-ecs-service-active.png
+│   │   │   ├── 03-running-task.png
+│   │   │   └── 04-task-definition.png
+│   │   ├── phase4-ecs
+│   │   │   ├── phase4-alb-security-group-plan.png
+│   │   │   ├── phase4-alb-target-group-listener-apply-success.png
+│   │   │   ├── phase4-alb-target-group-listener-plan.png
+│   │   │   ├── phase4-alb-working-browser.png.png
+│   │   │   ├── phase4-ecs-alb-integration-apply-success.png
+│   │   │   ├── phase4-ecs-foundation-apply-successs.png
+│   │   │   ├── phase4-ecs-service-running.png
+│   │   │   ├── phase4-ecs-service-security-group-plan.png
+│   │   │   ├── phase4-ecs-task-definition-apply-success.png
+│   │   │   ├── phase4-ecs-task-definition-plan.png
+│   │   │   └── phase4-target-group-healthy.png
+│   │   └── phase5-observability
+│   │       └── README.md
+│   ├── diagrams
+│   │   └── fuelops-aws-ecs-architecture.drawio
+│   └── evidence
+│       ├── 00-repo-structure.png
+│       ├── 01-ecs-service-running.png
+│       ├── 02-fuelops-alb-nginx-running.png
+│       ├── 03-cloudwatch-logs-fuelops-prod.png
+│       ├── 04-fuelops-ecs-prod-app-logs-2026-05-13.txt
+│       ├── 05-cloudwatch-logs-console.png
+│       └── 06-cloudwatch-live-tail-terminal.png
+├── README.md
+└── terraform
+    ├── environments
+    │   └── prod
+    │       ├── .terraform.lock.hcl
+    │       ├── alb.tf
+    │       ├── backend.tf
+    │       ├── ecs.tf
+    │       ├── main.tf
+    │       ├── networking.tf
+    │       ├── outputs.tf
+    │       ├── provider.tf
+    │       └── variables.tf
+    └── modules
+
 ```
 
 This layout keeps the infrastructure easy to read and explain. Splitting resources into `networking.tf`, `alb.tf`, and `ecs.tf` makes the design more maintainable and helps reviewers quickly understand the responsibility of each file.
@@ -220,6 +265,8 @@ The repository is structured to support CI/CD workflows and automated infrastruc
 
 GitHub is used for version control and collaboration, while the `.github/workflows/` directory prepares the project for GitHub Actions-based automation.
 
+For improved security and modern CI/CD practices, GitHub Actions authentication was configured using AWS OpenID Connect (OIDC) role assumption instead of long-term AWS access keys stored as GitHub secrets. This approach reduces credential management risks and aligns with production-oriented cloud security practices.
+
 The platform is designed to support future automation such as:
 
 - Terraform validation pipelines
@@ -237,6 +284,9 @@ This project includes basic observability through Amazon CloudWatch Logs for the
 
 After deployment, the service was verified in the ECS console with `fuelops-prod-service` showing 1 desired task and 1 running task, confirming that the application was successfully deployed.
 
+
+After deployment, the application was successfully accessed through the Application Load Balancer (ALB) public DNS endpoint, confirming that traffic routing between the ALB and ECS Fargate service was functioning correctly.
+
 Application log output was then reviewed in CloudWatch Logs under the `/ecs/fuelops-prod` log group. The log stream showed timestamped HTTP `GET /` requests from the running container, confirming that the service was receiving traffic and writing logs as expected.
 
 ### Evidence files
@@ -247,8 +297,9 @@ The following deployment evidence and operational verification artifacts were ca
 |---|---|
 | `docs/evidence/00-repo-structure.png` | Repository structure and Terraform project organization |
 | `docs/evidence/01-ecs-service-running.png` | ECS service showing healthy running Fargate task |
-| `docs/evidence/02-cloudwatch-logs-fuelops-prod.png` | CloudWatch Logs showing application log events |
-| `docs/evidence/03-fuelops-ecs-prod-app-logs-2026-05-13.txt` | Downloaded ECS application log output from CloudWatch |
+| `docs/evidence/02-fuelops-alb-nginx-running.png` | Application Load Balancer successfully serving the application |
+| `docs/evidence/03-cloudwatch-logs-fuelops-prod.png` | CloudWatch Logs showing application log events |
+| `docs/evidence/04-fuelops-ecs-prod-app-logs-2026-05-13.txt` | Downloaded ECS application log output from CloudWatch |
 
 ## Key learning points
 
@@ -299,14 +350,25 @@ Terraform resources were separated into focused files such as:
 
 This structure improves readability and reflects how larger infrastructure repositories are commonly organized in production environments.
 
+## Deployment Validation
+
+The platform was validated after deployment using several operational verification steps:
+
+- Confirmed successful Terraform provisioning without resource errors.
+- Verified ECS service health with running Fargate tasks.
+- Tested public application access through the Application Load Balancer DNS endpoint.
+- Reviewed CloudWatch Logs to confirm application traffic and container logging behavior.
+- Verified networking flow between public ALB resources and private ECS workloads.
+- Confirmed GitHub Actions Terraform workflow execution using AWS OIDC authentication.
+
 ## Future improvements
 
 Possible next improvements for this platform include:
 
-- HTTPS listener with AWS Certificate Manager (ACM) integration on the ALB.
-- ECS service auto scaling based on CPU or memory.
-- A small sample frontend or API application to make the platform more visibly end-to-end.
-- Further module reuse and multi-environment expansion.
+- HTTPS/TLS termination using AWS Certificate Manager (ACM).
+- Infrastructure modularization for reusable multi-environment deployments.
+- Enhanced observability using CloudWatch dashboards and alarms.
+- Blue/green deployment workflows for ECS services.
 
 ## Interview Talking Points
 
@@ -352,8 +414,6 @@ Key areas that can be discussed during technical interviews include:
 ### Engineering Mindset
 
 This project emphasizes infrastructure readability, operational visibility, maintainability, and production-oriented AWS design patterns rather than only focusing on resource deployment.
-
-## Author
 
 ## Author
 
