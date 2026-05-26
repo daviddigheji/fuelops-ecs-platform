@@ -83,6 +83,20 @@ The architecture is designed to support:
 ### Operating System
 - Linux
 
+## Skills Demonstrated
+
+- AWS ECS Fargate
+- Terraform
+- Infrastructure as Code
+- VPC Networking
+- Application Load Balancer
+- CloudWatch Logging
+- IAM
+- GitHub Actions
+- AWS OIDC Authentication
+- Linux
+- Docker
+
 ## Quick Start
 
 Clone the repository:
@@ -130,7 +144,7 @@ terraform destroy
 ## Project structure
 
 ```text
-.github
+├── .github
 │   └── workflows
 │       └── terraform.yml
 ├── .gitignore
@@ -151,9 +165,9 @@ terraform destroy
 │   │   │   ├── 02-public-private-subnets.png
 │   │   │   ├── 03-public-route-table-associations.png
 │   │   │   ├── 04-networking-terraform-plan.png
-│   │   │   ├── 04-public-route-table-routes.png
-│   │   │   ├── 05-private-route-table-routes.png
-│   │   │   └── 06-networking-terraform-apply-success.png
+│   │   │   ├── 05-public-route-table-routes.png
+│   │   │   ├── 06-private-route-table-routes.png
+│   │   │   └── 07-networking-terraform-apply-success.png
 │   │   ├── phase3-security
 │   │   │   ├── 01-security-group-rules.png
 │   │   │   ├── 03-ecs-trust-relationship.png
@@ -167,7 +181,7 @@ terraform destroy
 │   │   │   ├── phase4-alb-security-group-plan.png
 │   │   │   ├── phase4-alb-target-group-listener-apply-success.png
 │   │   │   ├── phase4-alb-target-group-listener-plan.png
-│   │   │   ├── phase4-alb-working-browser.png.png
+│   │   │   ├── phase4-alb-working-browser.png
 │   │   │   ├── phase4-ecs-alb-integration-apply-success.png
 │   │   │   ├── phase4-ecs-foundation-apply-successs.png
 │   │   │   ├── phase4-ecs-service-running.png
@@ -191,7 +205,6 @@ terraform destroy
 └── terraform
     ├── environments
     │   └── prod
-    │       ├── .terraform.lock.hcl
     │       ├── alb.tf
     │       ├── backend.tf
     │       ├── ecs.tf
@@ -201,7 +214,6 @@ terraform destroy
     │       ├── provider.tf
     │       └── variables.tf
     └── modules
-
 ```
 
 This layout keeps the infrastructure easy to read and explain. Splitting resources into `networking.tf`, `alb.tf`, and `ecs.tf` makes the design more maintainable and helps reviewers quickly understand the responsibility of each file.
@@ -288,6 +300,18 @@ After deployment, the service was verified in the ECS console with `fuelops-prod
 After deployment, the application was successfully accessed through the Application Load Balancer (ALB) public DNS endpoint, confirming that traffic routing between the ALB and ECS Fargate service was functioning correctly.
 
 Application log output was then reviewed in CloudWatch Logs under the `/ecs/fuelops-prod` log group. The log stream showed timestamped HTTP `GET /` requests from the running container, confirming that the service was receiving traffic and writing logs as expected.
+
+### ECS Service Running
+
+![ECS Service](docs/evidence/01-ecs-service-running.png)
+
+### ALB Application Access
+
+![ALB Access](docs/evidence/02-fuelops-alb-nginx-running.png)
+
+### CloudWatch Logs
+
+![CloudWatch Logs](docs/evidence/03-cloudwatch-logs-fuelops-prod.png)
 
 ### Evidence files
 
