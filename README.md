@@ -1,6 +1,6 @@
 # FuelOps ECS Platform
 
-Production-style AWS ECS Fargate platform for a sample application, built with Terraform to demonstrate practical cloud engineering skills across networking, load balancing, container orchestration, IAM, logging, and infrastructure as code.
+FuelOps is a production-style AWS DevOps platform that deploys a containerised Python application to Amazon ECS Fargate using Terraform and GitHub Actions. It includes secure multi-AZ networking, an Application Load Balancer, automated container deployment, CloudWatch observability, IAM least privilege, deployment health checks and rollback controls.
 
 ## Overview
 
